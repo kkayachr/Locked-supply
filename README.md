@@ -57,7 +57,7 @@ Simply go in there and add locked addresses to the correct token. You can then c
 
 ## 🚀 Deployment <a name = "deployment"></a>
 
-The smart contract can otherwise be deployed normally using the deploy_LockedSupply script. The intended use is although using the already deployed version mentioned above to avoid redundancy and extra gas fees.
+The smart contract can otherwise be deployed normally using the deploy_LockedSupply script. The intended use is although using the already deployed version mentioned above to avoid redundancy and unnecessary gas fees.
 
 ## ⛏️ Built Using <a name = "built_using"></a>
 
