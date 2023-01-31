@@ -70,4 +70,4 @@ The smart contract can otherwise be deployed normally using the deploy_LockedSup
 
 - [@kkayam](https://github.com/kkayam)
 
-See also the list of [contributors](/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/kkayachr/locked-supply/graphs/contributors) who participated in this project.
