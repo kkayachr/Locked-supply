@@ -1,6 +1,7 @@
 /** @type import('hardhat/config').HardhatUserConfig */
 require("dotenv").config();
 require("@nomiclabs/hardhat-waffle");
+require("hardhat-gas-reporter");
 require("@nomiclabs/hardhat-etherscan");
 
 const BSCTESTNET_PRIVATE_KEY = process.env.BSCTESTNET_PRIVATE_KEY;
@@ -31,6 +32,14 @@ module.exports = {
       accounts: [`0x${process.env.BSCMAINNET_PRIVATE_KEY}`],
       allowUnlimitedContractSize: true,
     },
+  },
+  gasReporter: {
+    currency: "USD",
+    token: "BNB",
+    gasPriceApi: "https://api.bscscan.com/api?module=proxy&action=eth_gasPrice",
+    gasPrice: 5,
+    coinmarketcap: "0431b70e-ffff-4061-81b0-fa361384d36c",
+    // enabled: (process.env.REPORT_GAS) ? true : false
   },
   etherscan: {
     apiKey: BSCSCAN_API_KEY,
