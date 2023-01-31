@@ -5,6 +5,17 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract LockedSupply {
+    event addedAddresses(
+        address indexed user,
+        address indexed token,
+        uint amount
+    );
+    event removedAddresses(
+        address indexed user,
+        address indexed token,
+        uint amount
+    );
+
     mapping(address => mapping(address => address[]))
         public userToTokenToLockedAddresses;
 
@@ -15,22 +26,36 @@ contract LockedSupply {
         for (uint i = 0; i < wallets.length; i++) {
             userToTokenToLockedAddresses[msg.sender][token].push(wallets[i]);
         }
+        emit addedAddresses(msg.sender, token, wallets.length);
     }
 
     function removeLockedAddresses(
         address token,
-        address[] calldata wallets
+        uint[] calldata walletIndices
     ) public {
         address[] storage lockedAddresses = userToTokenToLockedAddresses[
             msg.sender
         ][token];
-        uint deletedCount = 0;
+        for (uint i = 0; i < walletIndices.length; i++) {
+            delete lockedAddresses[walletIndices[i]];
+        }
+        emit removedAddresses(msg.sender, token, walletIndices.length);
+    }
+
+    function getIndices(
+        address token,
+        address[] calldata wallets
+    ) public view returns (uint[] memory indices) {
+        indices = new uint[](wallets.length);
+        address[] memory lockedAddresses = userToTokenToLockedAddresses[msg.sender][token];
+
+        uint count = 0;
         for (uint i = 0; i < lockedAddresses.length; i++) {
             for (uint j = 0; j < wallets.length; j++) {
                 if (lockedAddresses[i] == wallets[j]) {
-                    delete lockedAddresses[i];
-                    deletedCount++;
-                    if (deletedCount == wallets.length) return;
+                    indices[count] = i;
+                    count++;
+                    if (count == wallets.length) return indices;
                 }
             }
         }
