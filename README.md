@@ -3,7 +3,7 @@
  <img width=200px height=200px src="./logo.png" alt="Project logo"></a>
 </p>
 
-<h3 align="center">Locked Supply</h3>
+<h3 align="center">Locked Supply Monitor</h3>
 
 <div align="center">
 
