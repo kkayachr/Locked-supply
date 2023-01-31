@@ -25,10 +25,7 @@
 - [Deployment](#deployment)
 - [Usage](#usage)
 - [Built Using](#built_using)
-- [TODO](../TODO.md)
-- [Contributing](../CONTRIBUTING.md)
 - [Authors](#authors)
-- [Acknowledgments](#acknowledgement)
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -56,7 +53,7 @@ npx hardhat test
 The smart contract is available on Binance Smart Chain at the moment:
 - [BSC Contract](https://testnet.bscscan.com/address/0xdD2fA1F0450E42F16d1A24223fFa08d196E55AcE)
 
-Simply go in there and add your token and locked wallets.
+Simply go in there and add locked addresses to the correct token. You can then call get supply information which will give you total supply, locked supply and circulating supply.
 
 ## 🚀 Deployment <a name = "deployment"></a>
 
