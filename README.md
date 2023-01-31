@@ -14,7 +14,7 @@
 
 ---
 
-<p align="center"> Enables calculations of locked supply, circulating supply and total supply on directly on the blockchain!
+<p align="center"> Enables calculations of locked supply, circulating supply and total supply on directly on the blockchain
     <br> 
 </p>
 
