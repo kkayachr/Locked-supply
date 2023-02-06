@@ -18,7 +18,7 @@ describe("LockedSupplyMonitor", function () {
       await ethers.getSigners();
 
     let randomAddresses = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 30; i++) {
       randomAddresses.push(ethers.Wallet.createRandom().address);
     }
 
@@ -42,12 +42,19 @@ describe("LockedSupplyMonitor", function () {
   }
 
   it("Should add addresses", async () => {
-    const { lockedSupplyMonitor, owner, otherAccount, randomAddresses } =
+    const { lockedSupplyMonitor, owner, erc20Mock, otherAccount, randomAddresses } =
       await loadFixture(deployLockedSupplyMonitor);
 
-    await lockedSupplyMonitor.addLockedAddresses(owner.address, randomAddresses);
-    let lockedAddresses = await lockedSupplyMonitor.getLockedAddresses(owner.address, owner.address);
+    await lockedSupplyMonitor.addLockedAddresses(erc20Mock.address, randomAddresses);
+    let lockedAddresses = await lockedSupplyMonitor.getLockedAddresses(owner.address, erc20Mock.address);
     await expect(lockedAddresses).to.eql(randomAddresses);
+  });
+  it("Should not let add same addresses", async () => {
+    const { lockedSupplyMonitor, owner, erc20Mock, otherAccount, randomAddresses } =
+      await loadFixture(deployLockedSupplyMonitor);
+
+    await lockedSupplyMonitor.addLockedAddresses(erc20Mock.address, randomAddresses);
+    await expect(lockedSupplyMonitor.addLockedAddresses(erc20Mock.address, randomAddresses)).to.be.reverted;
   });
   it("Should give locked supply 1", async () => {
     const { lockedSupplyMonitor, erc20Mock, owner, otherAccount } =
@@ -93,11 +100,11 @@ describe("LockedSupplyMonitor", function () {
   it("Should let remove addresses", async () => {
     const { lockedSupplyMonitor, erc20Mock, owner, otherAccount, randomAddresses } =
       await loadFixture(deployLockedSupplyMonitor);
-
     await lockedSupplyMonitor.addLockedAddresses(erc20Mock.address, randomAddresses);
-    let indices = await lockedSupplyMonitor.getIndices(erc20Mock.address, randomAddresses.slice(0, 40));
-    await lockedSupplyMonitor.removeLockedAddresses(erc20Mock.address, indices);
-    let lockedAddresses = await lockedSupplyMonitor.getLockedAddresses(owner.address, erc20Mock.address);
-    await expect(lockedAddresses).to.eql([...new Array(40).fill(ethers.constants.AddressZero), ...randomAddresses.slice(40, 100)]);
+    await lockedSupplyMonitor.removeLockedAddresses(erc20Mock.address, randomAddresses.slice(0, 10));
+    var lockedAddresses = await lockedSupplyMonitor.getLockedAddresses(owner.address, erc20Mock.address);
+    lockedAddresses = Array.from(lockedAddresses).sort();
+    randomAddressesFirstTen = randomAddresses.slice(10, 30).sort();
+    await expect(lockedAddresses).to.eql(randomAddressesFirstTen);
   });
 });

@@ -27,6 +27,11 @@ module.exports = {
       accounts: [`0x${BSCTESTNET_PRIVATE_KEY}`],
       allowUnlimitedContractSize: true,
     },
+    ETHTestnet: {
+      url: `${process.env.ETH_TESTNET_RPC}`,
+      accounts: [`0x${BSCTESTNET_PRIVATE_KEY}`],
+      allowUnlimitedContractSize: true,
+    },
     BSCMainnet: {
       url: `${process.env.RPC_NODE_MAINNET}`,
       accounts: [`0x${process.env.BSCMAINNET_PRIVATE_KEY}`],
@@ -42,6 +47,6 @@ module.exports = {
     // enabled: (process.env.REPORT_GAS) ? true : false
   },
   etherscan: {
-    apiKey: BSCSCAN_API_KEY,
+    apiKey: `${process.env.ETHERSCAN_API_KEY}`,
   },
 };

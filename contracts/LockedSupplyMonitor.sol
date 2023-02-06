@@ -5,72 +5,108 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract LockedSupplyMonitor {
-    event addedAddresses(
+    event AddedAddresses(
         address indexed user,
-        address indexed token,
-        uint amount
+        IERC20 indexed token,
+        address[] addresses
     );
-    event removedAddresses(
+    event RemovedAddresses(
         address indexed user,
-        address indexed token,
-        uint amount
+        IERC20 indexed token,
+        address[] addresses
     );
 
-    mapping(address => mapping(address => address[]))
-        public userToTokenToLockedAddresses;
+    mapping(address => mapping(IERC20 => address[]))
+        private userToTokenToLockedAddresses;
 
     function addLockedAddresses(
-        address token,
+        IERC20 token,
         address[] calldata wallets
-    ) public {
+    ) external {
+        require(
+            wallets.length <= 30,
+            "Cannot process more than 30 addresses at a time."
+        );
+        require(isERC20(token), "Token must be ERC20");
         for (uint i = 0; i < wallets.length; i++) {
+            for (
+                uint j = 0;
+                j < userToTokenToLockedAddresses[msg.sender][token].length;
+                j++
+            ) {
+                if (
+                    wallets[i] ==
+                    userToTokenToLockedAddresses[msg.sender][token][j]
+                ) {
+                    revert("Address already in locked addresses");
+                }
+            }
             userToTokenToLockedAddresses[msg.sender][token].push(wallets[i]);
         }
-        emit addedAddresses(msg.sender, token, wallets.length);
+        emit AddedAddresses(msg.sender, token, wallets);
+    }
+
+    function isERC20(IERC20 token) private view returns (bool) {
+        if (address(token).code.length == 0) {
+            return false;
+        }
+        try token.balanceOf(address(0)) {} 
+        catch {
+            return false;
+        }
+        try token.totalSupply() {
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     function removeLockedAddresses(
-        address token,
-        uint[] calldata walletIndices
-    ) public {
+        IERC20 token,
+        address[] memory wallets
+    ) external {
+        require(
+            wallets.length <= 30,
+            "Cannot process more than 30 addresses at a time."
+        );
+        require(isERC20(token), "Token must be ERC20");
         address[] storage lockedAddresses = userToTokenToLockedAddresses[
             msg.sender
         ][token];
-        for (uint i = 0; i < walletIndices.length; i++) {
-            delete lockedAddresses[walletIndices[i]];
-        }
-        emit removedAddresses(msg.sender, token, walletIndices.length);
-    }
-
-    function getIndices(
-        address token,
-        address[] calldata wallets
-    ) public view returns (uint[] memory indices) {
-        indices = new uint[](wallets.length);
-        address[] memory lockedAddresses = userToTokenToLockedAddresses[msg.sender][token];
-
-        uint count = 0;
-        for (uint i = 0; i < lockedAddresses.length; i++) {
+        for (uint i = lockedAddresses.length - 1; i >= 0; i--) {
             for (uint j = 0; j < wallets.length; j++) {
                 if (lockedAddresses[i] == wallets[j]) {
-                    indices[count] = i;
-                    count++;
-                    if (count == wallets.length) return indices;
+                    lockedAddresses = removeIndex(lockedAddresses, i);
+                    delete wallets[j];
+                    break;
                 }
             }
+            if (i == 0) break;
         }
+        emit RemovedAddresses(msg.sender, token, wallets);
+    }
+
+    function removeIndex(
+        address[] storage array,
+        uint index
+    ) private returns (address[] storage) {
+        if (array.length > 1) {
+            array[index] = array[array.length - 1];
+        }
+        array.pop();
+        return array;
     }
 
     function getLockedAddresses(
         address user,
-        address token
+        IERC20 token
     ) public view returns (address[] memory) {
         return userToTokenToLockedAddresses[user][token];
     }
 
     function getLockedSupply(
         address user,
-        address token
+        IERC20 token
     ) public view returns (uint lockedSupply) {
         address[] memory lockedAddresses = getLockedAddresses(user, token);
         for (uint i = 0; i < lockedAddresses.length; i++) {
@@ -79,20 +115,20 @@ contract LockedSupplyMonitor {
         }
     }
 
-    function getTotalSupply(address token) public view returns (uint) {
-        return IERC20(token).totalSupply();
+    function getTotalSupply(IERC20 token) public view returns (uint) {
+        return token.totalSupply();
     }
 
     function getCirculatingSupply(
         address user,
-        address token
+        IERC20 token
     ) public view returns (uint) {
         return (getTotalSupply(token) - getLockedSupply(user, token));
     }
 
     function getSupplyInformation(
         address user,
-        address token
+        IERC20 token
     ) public view returns (uint, uint, uint) {
         return (
             getTotalSupply(token),
