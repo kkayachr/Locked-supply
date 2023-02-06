@@ -29,18 +29,6 @@ contract LockedSupplyMonitor {
         );
         require(isERC20(token), "Token must be ERC20");
         for (uint i = 0; i < wallets.length; i++) {
-            for (
-                uint j = 0;
-                j < userToTokenToLockedAddresses[msg.sender][token].length;
-                j++
-            ) {
-                if (
-                    wallets[i] ==
-                    userToTokenToLockedAddresses[msg.sender][token][j]
-                ) {
-                    revert("Address already in locked addresses");
-                }
-            }
             userToTokenToLockedAddresses[msg.sender][token].push(wallets[i]);
         }
         emit AddedAddresses(msg.sender, token, wallets);
@@ -50,8 +38,7 @@ contract LockedSupplyMonitor {
         if (address(token).code.length == 0) {
             return false;
         }
-        try token.balanceOf(address(0)) {} 
-        catch {
+        try token.balanceOf(address(0)) {} catch {
             return false;
         }
         try token.totalSupply() {
@@ -73,35 +60,102 @@ contract LockedSupplyMonitor {
         address[] storage lockedAddresses = userToTokenToLockedAddresses[
             msg.sender
         ][token];
-        for (uint i = lockedAddresses.length - 1; i >= 0; i--) {
+        for (uint i = 0; i < lockedAddresses.length; i++) {
             for (uint j = 0; j < wallets.length; j++) {
                 if (lockedAddresses[i] == wallets[j]) {
-                    lockedAddresses = removeIndex(lockedAddresses, i);
-                    delete wallets[j];
-                    break;
+                    delete lockedAddresses[i];
                 }
             }
-            if (i == 0) break;
         }
         emit RemovedAddresses(msg.sender, token, wallets);
     }
 
-    function removeIndex(
-        address[] storage array,
-        uint index
-    ) private returns (address[] storage) {
-        if (array.length > 1) {
-            array[index] = array[array.length - 1];
+    function removeLockedAddressesWithIndex(
+        IERC20 token,
+        uint[] calldata walletIndices
+    ) public {
+        require(
+            walletIndices.length <= 30,
+            "Cannot process more than 30 addresses at a time."
+        );
+        address[] storage lockedAddresses = userToTokenToLockedAddresses[
+            msg.sender
+        ][token];
+        address[] memory removedAddresses = new address[](walletIndices.length);
+
+        for (uint i = 0; i < walletIndices.length; i++) {
+            removedAddresses[i] = lockedAddresses[walletIndices[i]];
+            delete lockedAddresses[walletIndices[i]];
         }
-        array.pop();
-        return array;
+        emit RemovedAddresses(msg.sender, token, removedAddresses);
+    }
+
+    function getIndices(
+        IERC20 token,
+        address[] calldata wallets
+    ) public view returns (uint[] memory indices) {
+        address[] memory lockedAddresses = userToTokenToLockedAddresses[
+            msg.sender
+        ][token];
+
+        uint count;
+        for (uint i = 0; i < lockedAddresses.length; i++) {
+            for (uint j = 0; j < wallets.length; j++) {
+                if (lockedAddresses[i] == wallets[j]) {
+                    count++;
+                }
+            }
+        }
+
+        if (count == 0) return indices;
+        indices = new uint[](count);
+        count = 0;
+        for (uint i = 0; i < lockedAddresses.length; i++) {
+            for (uint j = 0; j < wallets.length; j++) {
+                if (lockedAddresses[i] == wallets[j]) {
+                    indices[count] = i;
+                    count++;
+                }
+            }
+        }
     }
 
     function getLockedAddresses(
         address user,
         IERC20 token
-    ) public view returns (address[] memory) {
-        return userToTokenToLockedAddresses[user][token];
+    ) public view returns (address[] memory addresses) {
+        address[] memory lockedAddresses = userToTokenToLockedAddresses[user][
+            token
+        ];
+        uint count;
+        for (uint i = 0; i < lockedAddresses.length; i++) {
+            bool counted;
+            if (lockedAddresses[i] == address(0)) continue;
+            for (uint j = 0; j < i; j++) {
+                if (lockedAddresses[i] == lockedAddresses[j]) {
+                    counted = true;
+                    break;
+                }
+            }
+            if (!counted) count++;
+        }
+
+        addresses = new address[](count);
+        count = 0;
+        for (uint i = 0; i < lockedAddresses.length; i++) {
+            if (lockedAddresses[i] == address(0)) continue;
+            bool skip;
+            for (uint j = 0; j < addresses.length; j++) {
+                if (lockedAddresses[i] == addresses[j]) {
+                    skip = true;
+                    break;
+                }
+            }
+            if (!skip) {
+                addresses[count] = lockedAddresses[i];
+                count++;
+            }
+        }
     }
 
     function getLockedSupply(
