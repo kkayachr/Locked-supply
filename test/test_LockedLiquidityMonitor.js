@@ -82,6 +82,27 @@ describe("LockedSupplyMonitor", function () {
     let lockedSupplyMonitorAmount = await lockedSupplyMonitor.getLockedSupply(owner.address, erc20Mock.address);
     await expect(lockedSupplyMonitorAmount).to.eq(2000);
   });
+  it("Should give locked supply with removal duplicates", async () => {
+    const { lockedSupplyMonitor, erc20Mock, owner, otherAccount } =
+      await loadFixture(deployLockedSupplyMonitor);
+
+    await lockedSupplyMonitor.addLockedAddresses(erc20Mock.address, [owner.address, otherAccount.address]);
+    await lockedSupplyMonitor.addLockedAddresses(erc20Mock.address, [owner.address, otherAccount.address]);
+    await lockedSupplyMonitor.removeLockedAddresses(erc20Mock.address, [owner.address]);
+    let lockedSupplyMonitorAmount = await lockedSupplyMonitor.getLockedSupply(owner.address, erc20Mock.address);
+    await expect(lockedSupplyMonitorAmount).to.eq(2000);
+  });
+  it("Should give locked supply with index removal duplicates", async () => {
+    const { lockedSupplyMonitor, erc20Mock, owner, otherAccount } =
+      await loadFixture(deployLockedSupplyMonitor);
+
+    await lockedSupplyMonitor.addLockedAddresses(erc20Mock.address, [owner.address, otherAccount.address]);
+    await lockedSupplyMonitor.addLockedAddresses(erc20Mock.address, [owner.address, otherAccount.address]);
+    let indices = await lockedSupplyMonitor.getIndices(erc20Mock.address, [owner.address]);
+    await lockedSupplyMonitor.removeLockedAddressesWithIndex(erc20Mock.address, indices);
+    let lockedSupplyMonitorAmount = await lockedSupplyMonitor.getLockedSupply(owner.address, erc20Mock.address);
+    await expect(lockedSupplyMonitorAmount).to.eq(2000);
+  });
   it("Should give total supply", async () => {
     const { lockedSupplyMonitor, erc20Mock, owner, otherAccount } =
       await loadFixture(deployLockedSupplyMonitor);
