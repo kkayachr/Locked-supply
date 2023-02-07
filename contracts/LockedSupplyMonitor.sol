@@ -50,7 +50,7 @@ contract LockedSupplyMonitor {
         for (uint i = 0; i < lockedAddresses.length; i++) {
             for (uint j = 0; j < wallets.length; j++) {
                 if (lockedAddresses[i] == wallets[j]) {
-                    removeIndex(lockedAddresses,i);
+                    removeIndex(lockedAddresses, i);
                 }
             }
         }
@@ -72,14 +72,12 @@ contract LockedSupplyMonitor {
 
         for (uint i = 0; i < walletIndices.length; i++) {
             removedAddresses[i] = lockedAddresses[walletIndices[i]];
-            removeIndex(lockedAddresses,walletIndices[i]);
+            removeIndex(lockedAddresses, walletIndices[i]);
         }
         emit RemovedAddresses(msg.sender, token, removedAddresses);
     }
-    function removeIndex(
-        address[] storage array,
-        uint index
-    ) private {
+
+    function removeIndex(address[] storage array, uint index) private {
         if (array.length > 1) {
             array[index] = array[array.length - 1];
         }
@@ -94,10 +92,12 @@ contract LockedSupplyMonitor {
             msg.sender
         ][token];
 
+        uint[] memory indicesPre = new uint[](lockedAddresses.length);
         uint count;
         for (uint i = 0; i < lockedAddresses.length; i++) {
             for (uint j = 0; j < wallets.length; j++) {
                 if (lockedAddresses[i] == wallets[j]) {
+                    indicesPre[count] = i;
                     count++;
                 }
             }
@@ -105,14 +105,8 @@ contract LockedSupplyMonitor {
 
         if (count == 0) return indices;
         indices = new uint[](count);
-        count = 0;
-        for (uint i = 0; i < lockedAddresses.length; i++) {
-            for (uint j = 0; j < wallets.length; j++) {
-                if (lockedAddresses[i] == wallets[j]) {
-                    indices[count] = i;
-                    count++;
-                }
-            }
+        for (uint i = 0; i < indices.length; i++) {
+            indices[i] = indicesPre[i];
         }
     }
 
@@ -123,34 +117,27 @@ contract LockedSupplyMonitor {
         address[] memory lockedAddresses = userToTokenToLockedAddresses[user][
             token
         ];
+
+        address[] memory addressesPre = new address[](lockedAddresses.length);
         uint count;
         for (uint i = 0; i < lockedAddresses.length; i++) {
-            bool counted;
             if (lockedAddresses[i] == address(0)) continue;
+            bool counted;
             for (uint j = 0; j < i; j++) {
                 if (lockedAddresses[i] == lockedAddresses[j]) {
                     counted = true;
                     break;
                 }
             }
-            if (!counted) count++;
+            if (!counted) {
+                addressesPre[count] = lockedAddresses[i];
+                count++;
+            }
         }
 
         addresses = new address[](count);
-        count = 0;
-        for (uint i = 0; i < lockedAddresses.length; i++) {
-            if (lockedAddresses[i] == address(0)) continue;
-            bool skip;
-            for (uint j = 0; j < addresses.length; j++) {
-                if (lockedAddresses[i] == addresses[j]) {
-                    skip = true;
-                    break;
-                }
-            }
-            if (!skip) {
-                addresses[count] = lockedAddresses[i];
-                count++;
-            }
+        for (uint i = 0; i < addresses.length; i++) {
+            addresses[i] = addressesPre[i];
         }
     }
 
@@ -169,8 +156,23 @@ contract LockedSupplyMonitor {
         return token.totalSupply();
     }
 
-    function duplicatesCheck(address user, IERC20 token) external view returns (address[] memory duplicateAddresses,uint[] memory duplicateIndices) {
-        address[] memory lockedAddresses = userToTokenToLockedAddresses[user][token];
+    function duplicatesCheck(
+        address user,
+        IERC20 token
+    )
+        external
+        view
+        returns (
+            address[] memory duplicateAddresses,
+            uint[] memory duplicateIndices
+        )
+    {
+        address[] memory lockedAddresses = userToTokenToLockedAddresses[user][
+            token
+        ];
+
+        address[] memory duplicateAddressesPre = new address[](lockedAddresses.length);
+        uint[] memory duplicateIndicesPre = new uint[](lockedAddresses.length);
         uint count;
         for (uint i = 0; i < lockedAddresses.length; i++) {
             bool counted;
@@ -181,26 +183,18 @@ contract LockedSupplyMonitor {
                     break;
                 }
             }
-            if (counted) count++;
+            if (counted) {
+                duplicateAddressesPre[count] = lockedAddresses[i];
+                duplicateIndicesPre[count] = i;
+                count++;
+            }
         }
 
         duplicateAddresses = new address[](count);
         duplicateIndices = new uint[](count);
-        count = 0;
-        for (uint i = 0; i < lockedAddresses.length; i++) {
-            if (lockedAddresses[i] == address(0)) continue;
-            bool duplicate;
-            for (uint j = 0; j < i; j++) {
-                if (lockedAddresses[i] == lockedAddresses[j]) {
-                    duplicate = true;
-                    break;
-                }
-            }
-            if (duplicate) {
-                duplicateAddresses[count] = lockedAddresses[i];
-                duplicateIndices[count] = i;
-                count++;
-            }
+        for (uint i = 0; i < duplicateAddresses.length; i++) {
+            duplicateAddresses[i] = duplicateAddressesPre[i];
+            duplicateIndices[i] = duplicateIndicesPre[i];
         }
     }
 
