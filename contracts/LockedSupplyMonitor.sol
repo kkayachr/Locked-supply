@@ -60,7 +60,7 @@ contract LockedSupplyMonitor {
     function removeLockedTokenAddressesWithIndex(
         IERC20 token,
         uint[] calldata walletIndices
-    ) public {
+    ) external {
         require(
             walletIndices.length <= 30,
             "Cannot process more than 30 addresses at a time."
@@ -88,7 +88,7 @@ contract LockedSupplyMonitor {
         address user,
         IERC20 token,
         address[] calldata wallets
-    ) public view returns (uint[] memory indices) {
+    ) external view returns (uint[] memory indices) {
         address[] memory lockedAddresses = userToTokenToLockedAddresses[user][token];
 
         uint[] memory indicesPre = new uint[](lockedAddresses.length);
@@ -165,7 +165,7 @@ contract LockedSupplyMonitor {
     function getSupplyInformation(
         address user,
         IERC20 token
-    ) public view returns (uint, uint, uint) {
+    ) external view returns (uint, uint, uint) {
         return (
             getTotalSupply(token),
             getLockedSupply(user, token),
