@@ -156,6 +156,24 @@ contract LockedSupplyMonitor {
         return token.totalSupply();
     }
 
+    function getCirculatingSupply(
+        address user,
+        IERC20 token
+    ) public view returns (uint) {
+        return (getTotalSupply(token) - getLockedSupply(user, token));
+    }
+
+    function getSupplyInformation(
+        address user,
+        IERC20 token
+    ) public view returns (uint, uint, uint) {
+        return (
+            getTotalSupply(token),
+            getLockedSupply(user, token),
+            getCirculatingSupply(user, token)
+        );
+    }
+
     function duplicatesCheck(
         address user,
         IERC20 token
@@ -196,24 +214,6 @@ contract LockedSupplyMonitor {
             duplicateAddresses[i] = duplicateAddressesPre[i];
             duplicateIndices[i] = duplicateIndicesPre[i];
         }
-    }
-
-    function getCirculatingSupply(
-        address user,
-        IERC20 token
-    ) public view returns (uint) {
-        return (getTotalSupply(token) - getLockedSupply(user, token));
-    }
-
-    function getSupplyInformation(
-        address user,
-        IERC20 token
-    ) public view returns (uint, uint, uint) {
-        return (
-            getTotalSupply(token),
-            getLockedSupply(user, token),
-            getCirculatingSupply(user, token)
-        );
     }
 
     function isERC20(IERC20 token) private view returns (bool) {
