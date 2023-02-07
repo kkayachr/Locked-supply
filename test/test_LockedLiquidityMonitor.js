@@ -55,19 +55,7 @@ describe("LockedSupplyMonitor", function () {
 
     await lockedSupplyMonitor.addLockedTokenAddresses(erc20Mock.address, randomAddresses);
     await lockedSupplyMonitor.addLockedTokenAddresses(erc20Mock.address, randomAddresses);
-    await expect(await lockedSupplyMonitor.getLockedTokenAddresses(owner.address, erc20Mock.address)).to.eql(randomAddresses);
-  });
-  it("Should check for duplicate addresses", async () => {
-    const { lockedSupplyMonitor, owner, erc20Mock, otherAccount, randomAddresses } =
-      await loadFixture(deployLockedSupplyMonitor);
-
-    await lockedSupplyMonitor.addLockedTokenAddresses(erc20Mock.address, randomAddresses);
-    await lockedSupplyMonitor.addLockedTokenAddresses(erc20Mock.address, randomAddresses);
-    var [duplicateAddresses, duplicateIndex] = await lockedSupplyMonitor.checkDuplicates(owner.address, erc20Mock.address);
-    await expect(duplicateAddresses).to.eql(randomAddresses);
-
-    var expectedIndices = Array.from(Array(30).keys()).map(x => x + randomAddresses.length);
-    await expect(duplicateIndex.map(x => x.toNumber())).to.eql(expectedIndices);
+    await expect(await lockedSupplyMonitor.getLockedTokenAddressesNoDuplicates(owner.address, erc20Mock.address)).to.eql(randomAddresses);
   });
   it("Should give locked supply 1", async () => {
     const { lockedSupplyMonitor, erc20Mock, owner, otherAccount } =
