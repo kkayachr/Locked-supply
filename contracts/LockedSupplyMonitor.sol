@@ -29,23 +29,10 @@ contract LockedSupplyMonitor {
         );
         require(isERC20(token), "Token must be ERC20");
         for (uint i = 0; i < wallets.length; i++) {
+            if (wallets[i] == address(0)) continue;
             userToTokenToLockedAddresses[msg.sender][token].push(wallets[i]);
         }
         emit AddedAddresses(msg.sender, token, wallets);
-    }
-
-    function isERC20(IERC20 token) private view returns (bool) {
-        if (address(token).code.length == 0) {
-            return false;
-        }
-        try token.balanceOf(address(0)) {} catch {
-            return false;
-        }
-        try token.totalSupply() {
-            return true;
-        } catch {
-            return false;
-        }
     }
 
     function removeLockedAddresses(
@@ -63,7 +50,7 @@ contract LockedSupplyMonitor {
         for (uint i = 0; i < lockedAddresses.length; i++) {
             for (uint j = 0; j < wallets.length; j++) {
                 if (lockedAddresses[i] == wallets[j]) {
-                    delete lockedAddresses[i];
+                    removeIndex(lockedAddresses,i);
                 }
             }
         }
@@ -85,9 +72,18 @@ contract LockedSupplyMonitor {
 
         for (uint i = 0; i < walletIndices.length; i++) {
             removedAddresses[i] = lockedAddresses[walletIndices[i]];
-            delete lockedAddresses[walletIndices[i]];
+            removeIndex(lockedAddresses,walletIndices[i]);
         }
         emit RemovedAddresses(msg.sender, token, removedAddresses);
+    }
+    function removeIndex(
+        address[] storage array,
+        uint index
+    ) private {
+        if (array.length > 1) {
+            array[index] = array[array.length - 1];
+        }
+        array.pop();
     }
 
     function getIndices(
@@ -173,6 +169,41 @@ contract LockedSupplyMonitor {
         return token.totalSupply();
     }
 
+    function duplicatesCheck(address user, IERC20 token) external view returns (address[] memory duplicateAddresses,uint[] memory duplicateIndices) {
+        address[] memory lockedAddresses = userToTokenToLockedAddresses[user][token];
+        uint count;
+        for (uint i = 0; i < lockedAddresses.length; i++) {
+            bool counted;
+            if (lockedAddresses[i] == address(0)) continue;
+            for (uint j = 0; j < i; j++) {
+                if (lockedAddresses[i] == lockedAddresses[j]) {
+                    counted = true;
+                    break;
+                }
+            }
+            if (counted) count++;
+        }
+
+        duplicateAddresses = new address[](count);
+        duplicateIndices = new uint[](count);
+        count = 0;
+        for (uint i = 0; i < lockedAddresses.length; i++) {
+            if (lockedAddresses[i] == address(0)) continue;
+            bool duplicate;
+            for (uint j = 0; j < i; j++) {
+                if (lockedAddresses[i] == lockedAddresses[j]) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (duplicate) {
+                duplicateAddresses[count] = lockedAddresses[i];
+                duplicateIndices[count] = i;
+                count++;
+            }
+        }
+    }
+
     function getCirculatingSupply(
         address user,
         IERC20 token
@@ -189,5 +220,19 @@ contract LockedSupplyMonitor {
             getLockedSupply(user, token),
             getCirculatingSupply(user, token)
         );
+    }
+
+    function isERC20(IERC20 token) private view returns (bool) {
+        if (address(token).code.length == 0) {
+            return false;
+        }
+        try token.balanceOf(address(0)) {} catch {
+            return false;
+        }
+        try token.totalSupply() {
+            return true;
+        } catch {
+            return false;
+        }
     }
 }
