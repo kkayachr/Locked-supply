@@ -51,7 +51,8 @@ npx hardhat test
 ## 🎈 Usage <a name="usage"></a>
 
 The smart contract is available on Binance Smart Chain at the moment:
-- [BSC Contract](https://testnet.bscscan.com/address/0x0F9Dc64476B544252ea9AA68BcAcA3646967450c)
+- [BSC Contract](https://testnet.bscscan.com/address/0xc25955eB4ca8D569645B7793a713C39Dedab15e8)
+- [ETH Sepolia Contract](https://sepolia.etherscan.io/address/0x84a008eAb1Cfb8F25FDAab5BD4F7B1101237e259)
 
 Simply go in there and add locked addresses to the correct token. You can then call "getSupplyInformation" which will give you total supply, locked supply and circulating supply.
 
