@@ -19,7 +19,7 @@ contract LockedSupplyMonitor {
     mapping(address => mapping(IERC20 => address[]))
         private userToTokenToLockedAddresses;
 
-    function addLockedAddresses(
+    function addLockedTokenAddresses(
         IERC20 token,
         address[] calldata wallets
     ) external {
@@ -35,7 +35,7 @@ contract LockedSupplyMonitor {
         emit AddedAddresses(msg.sender, token, wallets);
     }
 
-    function removeLockedAddresses(
+    function removeLockedTokenAddresses(
         IERC20 token,
         address[] memory wallets
     ) external {
@@ -57,7 +57,7 @@ contract LockedSupplyMonitor {
         emit RemovedAddresses(msg.sender, token, wallets);
     }
 
-    function removeLockedAddressesWithIndex(
+    function removeLockedTokenAddressesWithIndex(
         IERC20 token,
         uint[] calldata walletIndices
     ) public {
@@ -78,19 +78,18 @@ contract LockedSupplyMonitor {
     }
 
     function removeIndex(address[] storage array, uint index) private {
-        if (array.length > 1) {
+        if (array.length > 1 &&  index != array.length-1) {
             array[index] = array[array.length - 1];
         }
         array.pop();
     }
 
     function getIndices(
+        address user,
         IERC20 token,
         address[] calldata wallets
     ) public view returns (uint[] memory indices) {
-        address[] memory lockedAddresses = userToTokenToLockedAddresses[
-            msg.sender
-        ][token];
+        address[] memory lockedAddresses = userToTokenToLockedAddresses[user][token];
 
         uint[] memory indicesPre = new uint[](lockedAddresses.length);
         uint count;
@@ -110,7 +109,7 @@ contract LockedSupplyMonitor {
         }
     }
 
-    function getLockedAddresses(
+    function getLockedTokenAddresses(
         address user,
         IERC20 token
     ) public view returns (address[] memory addresses) {
@@ -145,7 +144,7 @@ contract LockedSupplyMonitor {
         address user,
         IERC20 token
     ) public view returns (uint lockedSupply) {
-        address[] memory lockedAddresses = getLockedAddresses(user, token);
+        address[] memory lockedAddresses = getLockedTokenAddresses(user, token);
         for (uint i = 0; i < lockedAddresses.length; i++) {
             if (lockedAddresses[i] == address(0)) continue;
             lockedSupply += IERC20(token).balanceOf(lockedAddresses[i]);
@@ -174,7 +173,7 @@ contract LockedSupplyMonitor {
         );
     }
 
-    function duplicatesCheck(
+    function checkDuplicates(
         address user,
         IERC20 token
     )
